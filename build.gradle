@@ -1,0 +1,44 @@
+plugins {
+	id 'org.springframework.boot' version '2.1.7.RELEASE'
+	id 'java'
+	id 'com.palantir.docker' version '0.22.1'
+}
+
+apply plugin: 'io.spring.dependency-management'
+
+group = 'com.tlvlp'
+version = '1.0.0'
+sourceCompatibility = '1.8'
+def projectName = 'iot-reporting-service'
+def dockerRepo = 'docker.tlvlp.com'
+def mainClass = 'com.tlvlp.iot.server.reporting.Application'
+def servicePort = 8400
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'it.sauronsoftware.cron4j:cron4j:2.2.5'
+
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+}
+
+bootJar {
+	mainClassName = mainClass
+	version = project.version
+}
+
+docker {
+	name "$dockerRepo/$projectName:$project.version"
+	tag "$project.version", "$dockerRepo/$projectName:$project.version"
+	tag 'latest', "$dockerRepo/$projectName:latest"
+	dependsOn bootJar
+	files bootJar.outputs
+	dockerfile file('Dockerfile')
+	buildArgs([PROJECT: projectName, SERVICE_PORT: servicePort.toString()])
+	pull true
+	noCache true
+}
