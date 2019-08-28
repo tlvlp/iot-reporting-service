@@ -8,7 +8,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -28,11 +27,7 @@ public class ValuesAPI {
 
     @PostMapping("${REPORTING_SERVICE_API_POST_VALUES}")
     public ResponseEntity saveValues(@RequestBody List<Value> values) {
-        try {
-            valueService.saveValues(values);
-            return new ResponseEntity(HttpStatus.ACCEPTED);
-        } catch (IllegalArgumentException e) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
-        }
+        return new ResponseEntity<>(valueService.saveIncomingValues(values), HttpStatus.MULTI_STATUS);
+
     }
 }

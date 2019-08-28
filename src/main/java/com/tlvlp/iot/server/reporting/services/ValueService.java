@@ -6,10 +6,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 
@@ -54,22 +57,32 @@ public class ValueService {
         return query;
     }
 
-    public void saveValues(List<Value> values) {
-        values.forEach(this::saveNewValue);
+    public HashMap<Value, ResponseEntity<String>> saveIncomingValues(List<Value> values) {
+        HashMap<Value, ResponseEntity<String>> results = new HashMap<>();
+        for (Value value : values) {
+            results.put(value, saveNewValue(value));
+        }
+        return results;
     }
 
-    private void saveNewValue(Value value) {
-        checkValueValidity(value);
-        value.setValueID(getNewValueID());
-        LocalDateTime now = LocalDateTime.now();
-        value.setTimeFrom(now);
-        value.setTimeTo(now);
-        value.setScope(Value.Scope.RAW);
-        mongoTemplate.save(value);
-        log.info("Value saved: {}", value);
+    private ResponseEntity<String> saveNewValue(Value value) {
+        try {
+            checkValueValidity(value);
+            value.setValueID(getNewValueID());
+            LocalDateTime now = LocalDateTime.now();
+            value.setTimeFrom(now);
+            value.setTimeTo(now);
+            value.setScope(Value.Scope.RAW);
+            mongoTemplate.save(value);
+            log.info("Value saved: {}", value);
+            return new ResponseEntity<>("Saved", HttpStatus.ACCEPTED);
+        } catch (IllegalArgumentException e) {
+            log.error("Value cannot be saved: {}", e.getMessage());
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
     }
 
-    private void checkValueValidity(Value value) {
+    private void checkValueValidity(Value value) throws IllegalArgumentException {
         if (!isValidString(value.getUnitID())) {
             throw new IllegalArgumentException("Value unitID must be a valid String!");
         } else if (!isValidString(value.getModuleID())) {
