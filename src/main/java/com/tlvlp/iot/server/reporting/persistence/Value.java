@@ -25,7 +25,7 @@ public class Value {
 
     @Override
     public String toString() {
-        return "ValueAverage{" +
+        return "Value{" +
                 "valueID='" + valueID + '\'' +
                 ", unitID='" + unitID + '\'' +
                 ", moduleID='" + moduleID + '\'' +

@@ -84,11 +84,11 @@ public class ValueService {
 
     private void checkValueValidity(Value value) throws IllegalArgumentException {
         if (!isValidString(value.getUnitID())) {
-            throw new IllegalArgumentException("Value unitID must be a valid String!");
+            throw new IllegalArgumentException(String.format("unitID must be a valid String! %s", value));
         } else if (!isValidString(value.getModuleID())) {
-            throw new IllegalArgumentException("Value moduleID must be a valid String!");
-        } else if (value.getValue() != null) {
-            throw new IllegalArgumentException("Value must be a valid Double!");
+            throw new IllegalArgumentException(String.format("moduleID must be a valid String! %s", value));
+        } else if (value.getValue() == null) {
+            throw new IllegalArgumentException(String.format("value must be a valid Double! %s", value));
         }
     }
 
