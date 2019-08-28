@@ -13,20 +13,34 @@ This Dockerized SpringBoot-based service is responsible for all reporting relate
 ## Server-side API
 Actual API endpoints are inherited from the project's [deployment repository](https://gitlab.com/tlvlp/iot.server.deployment) via environment variables.
 
-### GET XXXXXXXX:
+### POST Values:
 
-Returns a list of XXXXXXXXXXXX
-
+Returns a multi-status response with a Map where the keys are the posted values and the values are the result statuses
 
 #### Related environment variables:
-- ${XXXXXXXXXXXXXXXXXXX}
-- ${XXXXXXXXXXXXXXXXXXX}
+- ${REPORTING_SERVICE_API_POST_VALUES}
+- ${REPORTING_SERVICE_API_POST_VALUES_URL}
 
 #### Fields:
-Takes a XXXXXXXXXXXX object in the RequestBody where all the empty fields are ignored
-- **XXXXXXXXXXXX**: String - XXXXXXXXXXXX
+Takes a List in the RequestBody where each value must contain:
+- **unitID**: String - ID of the containing Unit
+- **moduleID**: String - module ID
+- **value**: Double - requested value/state of the Module
 
 ```
-{
-    "XXXXXXXXXXXX": "XXXXXXXXXXXX"
+{ 
+    [   
+        {
+            "unitID": "tlvlp.iot.BazsalikON-soil",
+            "moduleID": "relay|growlight",
+            "value": 1
+        },
+        {
+            "unitID": "tlvlp.iot.BazsalikON-soil",
+            "moduleID": "gl5528|lightPercent", 
+            "value": 85
+        {
+    ]
 }
+
+```
