@@ -22,7 +22,7 @@ public class ValuesAPI {
     }
 
     @GetMapping("${REPORTING_SERVICE_API_GET_FILTERED_VALUES}")
-    public ResponseEntity getFilteredValues(@RequestBody Value value) {
+    public ResponseEntity getFilteredValues(Value value) {
         return new ResponseEntity<>(valueService.getFilteredValues(value), HttpStatus.OK);
     }
 

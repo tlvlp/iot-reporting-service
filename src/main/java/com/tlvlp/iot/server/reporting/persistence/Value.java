@@ -6,13 +6,17 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
-@Document
+@Document(collection = "values")
 public class Value {
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(valueID, unitID, moduleID, timeFrom, timeTo, value, scope);
+    }
 
     @Id
     private String valueID;
     private String unitID;
-    private String module;
     private String moduleID;
     private LocalDateTime timeFrom;
     private LocalDateTime timeTo;
@@ -24,7 +28,6 @@ public class Value {
         return "ValueAverage{" +
                 "valueID='" + valueID + '\'' +
                 ", unitID='" + unitID + '\'' +
-                ", module='" + module + '\'' +
                 ", moduleID='" + moduleID + '\'' +
                 ", timeFrom=" + timeFrom +
                 ", timeTo=" + timeTo +
@@ -40,7 +43,6 @@ public class Value {
         Value that = (Value) o;
         return valueID.equals(that.valueID) &&
                 unitID.equals(that.unitID) &&
-                module.equals(that.module) &&
                 moduleID.equals(that.moduleID) &&
                 timeFrom.equals(that.timeFrom) &&
                 timeTo.equals(that.timeTo) &&
@@ -48,9 +50,8 @@ public class Value {
                 scope == that.scope;
     }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(valueID, unitID, module, moduleID, timeFrom, timeTo, value, scope);
+    public enum Scope {
+        RAW, HOURLY, DAILY, WEEKLY, MONTHLY, YEARLY
     }
 
     public String getValueID() {
@@ -68,15 +69,6 @@ public class Value {
 
     public Value setUnitID(String unitID) {
         this.unitID = unitID;
-        return this;
-    }
-
-    public String getModule() {
-        return module;
-    }
-
-    public Value setModule(String module) {
-        this.module = module;
         return this;
     }
 
@@ -123,9 +115,5 @@ public class Value {
     public Value setScope(Scope scope) {
         this.scope = scope;
         return this;
-    }
-
-    public enum Scope {
-        RAW, HOURLY, DAILY, WEEKLY, MONTHLY, YEARLY
     }
 }

@@ -1,9 +1,9 @@
 package com.tlvlp.iot.server.reporting.services;
 
 import com.tlvlp.iot.server.reporting.persistence.Value;
-import com.tlvlp.iot.server.reporting.persistence.ValueRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
@@ -18,16 +18,40 @@ import java.util.UUID;
 public class ValueService {
 
     private static final Logger log = LoggerFactory.getLogger(ValueService.class);
-    private ValueRepository repository;
+    private MongoTemplate mongoTemplate;
 
-    public ValueService(ValueRepository repository) {
-        this.repository = repository;
+    public ValueService(MongoTemplate mongoTemplate) {
+        this.mongoTemplate = mongoTemplate;
     }
 
-    public List<Value> getFilteredValues(Value valueExample) {
+    public List<Value> getFilteredValues(Value filter) {
+        return mongoTemplate.find(getQueryFromExample(filter), Value.class);
+    }
+
+    private Query getQueryFromExample(Value filter) {
         Query query = new Query();
-        query.addCriteria(Criteria.where("name").is("Eric"));
-        return repository.find(query, Value.class);
+        if (filter.getValueID() != null) {
+            query.addCriteria(Criteria.where("valueID").is(filter.getValueID()));
+        }
+        if (filter.getUnitID() != null) {
+            query.addCriteria(Criteria.where("unitID").is(filter.getUnitID()));
+        }
+        if (filter.getModuleID() != null) {
+            query.addCriteria(Criteria.where("moduleID").is(filter.getModuleID()));
+        }
+        if (filter.getValue() != null) {
+            query.addCriteria(Criteria.where("value").is(filter.getValue()));
+        }
+        if (filter.getScope() != null) {
+            query.addCriteria(Criteria.where("scope").is(filter.getScope()));
+        }
+        if (filter.getTimeFrom() != null) {
+            query.addCriteria(Criteria.where("timeFrom").gte(filter.getTimeFrom()));
+        }
+        if (filter.getTimeTo() != null) {
+            query.addCriteria(Criteria.where("timeTo").lte(filter.getTimeTo()));
+        }
+        return query;
     }
 
     public void saveValues(List<Value> values) {
@@ -41,15 +65,13 @@ public class ValueService {
         value.setTimeFrom(now);
         value.setTimeTo(now);
         value.setScope(Value.Scope.RAW);
-        repository.save(value);
+        mongoTemplate.save(value);
         log.info("Value saved: {}", value);
     }
 
     private void checkValueValidity(Value value) {
         if (!isValidString(value.getUnitID())) {
             throw new IllegalArgumentException("Value unitID must be a valid String!");
-        } else if (!isValidString(value.getModule())) {
-            throw new IllegalArgumentException("Value module must be a valid String!");
         } else if (!isValidString(value.getModuleID())) {
             throw new IllegalArgumentException("Value moduleID must be a valid String!");
         } else if (value.getValue() != null) {
@@ -59,15 +81,6 @@ public class ValueService {
 
     private Boolean isValidString(String str) {
         return str != null && !str.isEmpty();
-    }
-
-    private Boolean isValueValidDouble(String str) {
-        try {
-            Double.parseDouble(str);
-            return true;
-        } catch (NullPointerException | NumberFormatException e) {
-            return false;
-        }
     }
 
     private String getNewValueID() {
