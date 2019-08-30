@@ -9,6 +9,23 @@ import java.util.Objects;
 @Document(collection = "values")
 public class Value {
 
+    public Value() {
+    }
+
+    public Value(Value copyValue) {
+        this.valueID = copyValue.getValueID();
+        this.unitID = copyValue.getUnitID();
+        this.moduleID = copyValue.getModuleID();
+        this.timeFrom = copyValue.getTimeFrom();
+        this.timeTo = copyValue.getTimeTo();
+        this.value = copyValue.getValue();
+        this.scope = copyValue.getScope();
+    }
+
+    public enum Scope {
+        RAW, HOURLY, DAILY, WEEKLY, MONTHLY, YEARLY
+    }
+
     @Override
     public int hashCode() {
         return Objects.hash(valueID, unitID, moduleID, timeFrom, timeTo, value, scope);
@@ -48,10 +65,6 @@ public class Value {
                 timeTo.equals(that.timeTo) &&
                 value.equals(that.value) &&
                 scope == that.scope;
-    }
-
-    public enum Scope {
-        RAW, HOURLY, DAILY, WEEKLY, MONTHLY, YEARLY
     }
 
     public String getValueID() {
