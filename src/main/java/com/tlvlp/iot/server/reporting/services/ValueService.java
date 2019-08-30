@@ -4,8 +4,6 @@ import com.tlvlp.iot.server.reporting.persistence.Value;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -22,59 +20,32 @@ public class ValueService {
 
     private static final Logger log = LoggerFactory.getLogger(ValueService.class);
     private MongoTemplate mongoTemplate;
+    private ReportingService reportingService;
 
-    public ValueService(MongoTemplate mongoTemplate) {
+    public ValueService(MongoTemplate mongoTemplate, ReportingService reportingService) {
         this.mongoTemplate = mongoTemplate;
-    }
-
-    public List<Value> getFilteredValues(Value filter) {
-        return mongoTemplate.find(getQueryFromExample(filter), Value.class);
-    }
-
-    private Query getQueryFromExample(Value filter) {
-        Query query = new Query();
-        if (filter.getValueID() != null) {
-            query.addCriteria(Criteria.where("valueID").is(filter.getValueID()));
-        }
-        if (filter.getUnitID() != null) {
-            query.addCriteria(Criteria.where("unitID").is(filter.getUnitID()));
-        }
-        if (filter.getModuleID() != null) {
-            query.addCriteria(Criteria.where("moduleID").is(filter.getModuleID()));
-        }
-        if (filter.getValue() != null) {
-            query.addCriteria(Criteria.where("value").is(filter.getValue()));
-        }
-        if (filter.getScope() != null) {
-            query.addCriteria(Criteria.where("scope").is(filter.getScope()));
-        }
-        if (filter.getTimeFrom() != null) {
-            query.addCriteria(Criteria.where("timeFrom").gte(filter.getTimeFrom()));
-        }
-        if (filter.getTimeTo() != null) {
-            query.addCriteria(Criteria.where("timeTo").lte(filter.getTimeTo()));
-        }
-        return query;
+        this.reportingService = reportingService;
     }
 
     public HashMap<Value, ResponseEntity<String>> saveIncomingValues(List<Value> values) {
         HashMap<Value, ResponseEntity<String>> results = new HashMap<>();
         for (Value value : values) {
-            results.put(value, saveNewValue(value));
+            results.put(value, updateValues(value));
         }
         return results;
     }
 
-    private ResponseEntity<String> saveNewValue(Value value) {
+    private ResponseEntity<String> updateValues(Value value) {
         try {
             checkValueValidity(value);
-            value.setValueID(getNewValueID());
             LocalDateTime now = LocalDateTime.now();
-            value.setTimeFrom(now);
-            value.setTimeTo(now);
-            value.setScope(Value.Scope.RAW);
+            value.setValueID(getNewValueID())
+                    .setTimeFrom(now)
+                    .setTimeTo(now)
+                    .setScope(Value.Scope.RAW);
             mongoTemplate.save(value);
             log.info("Value saved: {}", value);
+            updateRollingAverages(value);
             return new ResponseEntity<>("Saved", HttpStatus.ACCEPTED);
         } catch (IllegalArgumentException e) {
             log.error("Value cannot be saved: {}", e.getMessage());
@@ -92,12 +63,37 @@ public class ValueService {
         }
     }
 
+    private void updateRollingAverages(Value value) {
+        try {
+            List<Value> averages = reportingService.updateRollingAverages(value);
+            for (Value average : averages) {
+                removeOutdatedAverages(average);
+                average.setValueID(getNewValueID());
+                mongoTemplate.save(average);
+                log.info("Average saved: {}", average);
+            }
+        } catch (ReportingException e) {
+            log.error("Cannot update rolling averages: {}", e.getMessage());
+        }
+    }
+
+    private void removeOutdatedAverages(Value value) {
+        Value filter = new Value(value).setValueID(null).setValue(null);
+        List<Value> outdatedAverages = reportingService.getFilteredValues(filter, true, true);
+        outdatedAverages.forEach(this::deleteValue);
+    }
+
     private Boolean isValidString(String str) {
         return str != null && !str.isEmpty();
     }
 
     private String getNewValueID() {
         return String.format("%s-%s-VALUE", LocalDate.now().toString(), UUID.randomUUID().toString());
+    }
+
+    private void deleteValue(Value average) {
+        mongoTemplate.remove(average);
+        log.debug(String.format("Deleting value: %s", average));
     }
 
 }

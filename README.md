@@ -4,7 +4,9 @@
 Part of the tlvlp IoT project's server side microservices.
 
 This Dockerized SpringBoot-based service is responsible for all reporting related tasks:
-- Exposes API for accepting new value entries
+- Exposes API for saving new value entries
+- Exposes API for querying reports
+- Generates rolling averages for HOURLY, DAILY, WEEKLY, MONTHLY, YEARLY scopes
 
 ## Deployment
 - This service is currently designed as **stateless** and can have an arbitrary number of instances running per Docker Swarm Stack.
@@ -25,7 +27,7 @@ Returns a multi-status response with a Map where the keys are the posted values 
 Takes a List in the RequestBody where each value must contain:
 - **unitID**: String - ID of the containing Unit
 - **moduleID**: String - module ID
-- **value**: Double - requested value/state of the Module
+- **value**: Double - value/state of the Module
 
 ```
 { 
