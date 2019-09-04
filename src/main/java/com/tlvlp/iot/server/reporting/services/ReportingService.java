@@ -1,6 +1,8 @@
 package com.tlvlp.iot.server.reporting.services;
 
 import com.tlvlp.iot.server.reporting.persistence.Value;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -20,27 +22,44 @@ import static java.time.temporal.ChronoUnit.*;
 @Service
 public class ReportingService {
 
+    private static final Logger log = LoggerFactory.getLogger(ReportingService.class);
     private MongoTemplate mongoTemplate;
 
     public ReportingService(MongoTemplate mongoTemplate) {
         this.mongoTemplate = mongoTemplate;
     }
 
-    public Map<ChronoUnit, Map<String, Double>> getAverages(String unitID, String moduleID, LocalDateTime timeFrom, LocalDateTime timeTo) {
-        List<Value> rawValues = getRawValuesFromDb(unitID, moduleID, timeFrom, timeTo);
+    public Map<ChronoUnit, Map<String, Double>> getAverages(String unitID, String moduleID, LocalDateTime timeFrom,
+                                                            LocalDateTime timeTo, Set<ChronoUnit> requestedScopes) {
+        List<Value> rawValues = getRawValuesFromDB(unitID, moduleID, timeFrom, timeTo);
         Map<ChronoUnit, Map<String, Double>> averagesReport = new HashMap<>();
-        // TODO add scope selector
-        // TODO add raw values as well
-        averagesReport.put(HOURS, getHourlyAverages(rawValues));
-        averagesReport.put(DAYS, getDailyAverages(rawValues));
-        averagesReport.put(MONTHS, getMonthlyAverages(rawValues));
-        averagesReport.put(YEARS, getYearlyAverages(rawValues));
+        for (ChronoUnit scope : requestedScopes) {
+            switch (scope) {
+                case MINUTES:
+                    averagesReport.put(MINUTES, getFormattedRawValues(rawValues));
+                    break;
+                case HOURS:
+                    averagesReport.put(HOURS, getHourlyAverages(rawValues));
+                    break;
+                case DAYS:
+                    averagesReport.put(DAYS, getDailyAverages(rawValues));
+                    break;
+                case MONTHS:
+                    averagesReport.put(MONTHS, getMonthlyAverages(rawValues));
+                    break;
+                case YEARS:
+                    averagesReport.put(YEARS, getYearlyAverages(rawValues));
+                    break;
+            }
+        }
+        log.info(String.format("Returning averages:" +
+                        "{unitID=%s, moduleID=%s, timeFrom=%s, timeTo=%s, requestedScopes=%s, rawValueCount=%s}",
+                unitID, moduleID, timeFrom, timeTo, requestedScopes, rawValues.size()));
         return averagesReport;
-
     }
 
 
-    private List<Value> getRawValuesFromDb(String unitID, String moduleID, LocalDateTime timeFrom, LocalDateTime timeTo) {
+    private List<Value> getRawValuesFromDB(String unitID, String moduleID, LocalDateTime timeFrom, LocalDateTime timeTo) {
         Query query = new Query();
         query.addCriteria(Criteria.where("unitID").is(unitID));
         query.addCriteria(Criteria.where("moduleID").is(moduleID));
@@ -51,6 +70,26 @@ public class ReportingService {
                 .include("value")
                 .exclude("valueID");
         return mongoTemplate.find(query, Value.class);
+    }
+
+    private Map<String, Double> getFormattedRawValues(List<Value> rawList) {
+        Set<LocalDateTime> hourSet = rawList.stream()
+                .map(value -> value.getTime().truncatedTo(HOURS))
+                .collect(Collectors.toSet());
+        Map<String, Double> hourlyAverages = new TreeMap<>();
+        for (LocalDateTime date : hourSet) {
+            OptionalDouble average = rawList.stream()
+                    .filter(rawValue -> date.getYear() == rawValue.getTime().getYear())
+                    .filter(rawValue -> date.getMonth() == rawValue.getTime().getMonth())
+                    .filter(rawValue -> date.getDayOfMonth() == rawValue.getTime().getDayOfMonth())
+                    .filter(rawValue -> date.getHour() == rawValue.getTime().getHour())
+                    .mapToDouble(Value::getValue)
+                    .average();
+            if (average.isPresent()) {
+                hourlyAverages.put(date.toString(), average.getAsDouble());
+            }
+        }
+        return hourlyAverages;
     }
 
     private Map<String, Double> getHourlyAverages(List<Value> rawList) {
