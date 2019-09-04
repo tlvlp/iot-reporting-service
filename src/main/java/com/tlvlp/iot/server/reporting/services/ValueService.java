@@ -20,32 +20,27 @@ public class ValueService {
 
     private static final Logger log = LoggerFactory.getLogger(ValueService.class);
     private MongoTemplate mongoTemplate;
-    private ReportingService reportingService;
 
-    public ValueService(MongoTemplate mongoTemplate, ReportingService reportingService) {
+    public ValueService(MongoTemplate mongoTemplate) {
         this.mongoTemplate = mongoTemplate;
-        this.reportingService = reportingService;
     }
 
     public HashMap<Value, ResponseEntity<String>> saveIncomingValues(List<Value> values) {
         HashMap<Value, ResponseEntity<String>> results = new HashMap<>();
         for (Value value : values) {
-            results.put(value, updateValues(value));
+            results.put(value, updateValueInDB(value));
         }
         return results;
     }
 
-    private ResponseEntity<String> updateValues(Value value) {
+    private ResponseEntity<String> updateValueInDB(Value value) {
         try {
             checkValueValidity(value);
             LocalDateTime now = LocalDateTime.now();
             value.setValueID(getNewValueID())
-                    .setTimeFrom(now)
-                    .setTimeTo(now)
-                    .setScope(Value.Scope.RAW);
+                    .setTime(now);
             mongoTemplate.save(value);
             log.info("Value saved: {}", value);
-            updateRollingAverages(value);
             return new ResponseEntity<>("Saved", HttpStatus.ACCEPTED);
         } catch (IllegalArgumentException e) {
             log.error("Value cannot be saved: {}", e.getMessage());
@@ -61,26 +56,6 @@ public class ValueService {
         } else if (value.getValue() == null) {
             throw new IllegalArgumentException(String.format("value must be a valid Double! %s", value));
         }
-    }
-
-    private void updateRollingAverages(Value value) {
-        try {
-            List<Value> averages = reportingService.updateRollingAverages(value);
-            for (Value average : averages) {
-                removeOutdatedAverages(average);
-                average.setValueID(getNewValueID());
-                mongoTemplate.save(average);
-                log.info("Average saved: {}", average);
-            }
-        } catch (ReportingException e) {
-            log.error("Cannot update rolling averages: {}", e.getMessage());
-        }
-    }
-
-    private void removeOutdatedAverages(Value value) {
-        Value filter = new Value(value).setValueID(null).setValue(null);
-        List<Value> outdatedAverages = reportingService.getFilteredValues(filter, true, true);
-        outdatedAverages.forEach(this::deleteValue);
     }
 
     private Boolean isValidString(String str) {
