@@ -3,6 +3,7 @@ package com.tlvlp.iot.server.reporting.rpc;
 import com.tlvlp.iot.server.reporting.persistence.Value;
 import com.tlvlp.iot.server.reporting.services.ReportingService;
 import com.tlvlp.iot.server.reporting.services.ValueService;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -11,6 +12,7 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @RestController
 public class ReportingAPI {
@@ -26,10 +28,13 @@ public class ReportingAPI {
     @GetMapping("${REPORTING_SERVICE_API_GET_AVERAGES}")
     public ResponseEntity getAverages(@RequestParam String unitID,
                                       @RequestParam String moduleID,
-                                      @RequestParam LocalDateTime timeFrom,
-                                      @RequestParam LocalDateTime timeTo) {
+                                      @RequestParam
+                                      @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime timeFrom,
+                                      @RequestParam
+                                      @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime timeTo,
+                                      @RequestParam Set<ChronoUnit> requestedScopes) {
         Map<ChronoUnit, Map<String, Double>> filteredValues =
-                reportingService.getAverages(unitID, moduleID, timeFrom, timeTo);
+                reportingService.getAverages(unitID, moduleID, timeFrom, timeTo, requestedScopes);
         return new ResponseEntity<>(filteredValues, HttpStatus.OK);
     }
 
