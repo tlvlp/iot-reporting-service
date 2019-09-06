@@ -1,4 +1,4 @@
-FROM openjdk:8-jdk-alpine
+FROM openjdk:11-jre-slim
 
 ARG PROJECT
 ARG SERVICE_PORT
