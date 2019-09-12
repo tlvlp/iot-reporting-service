@@ -64,7 +64,7 @@ public class ReportingService {
         query.addCriteria(Criteria.where("unitID").is(unitID));
         query.addCriteria(Criteria.where("moduleID").is(moduleID));
         query.addCriteria(Criteria.where("time").gte(timeFrom).lt(timeTo));
-        query.with(new Sort(Sort.Direction.ASC, "time"));
+        query.with(Sort.by(Sort.Direction.ASC, "time"));
         query.fields()
                 .include("time")
                 .include("value")

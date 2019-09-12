@@ -1,33 +1,39 @@
 plugins {
-	id 'org.springframework.boot' version '2.1.7.RELEASE'
-	id 'java'
+	id 'org.springframework.boot' version '2.2.0.M6'
+	id 'io.spring.dependency-management' version '1.0.8.RELEASE'
 	id 'com.palantir.docker' version '0.22.1'
+	id 'java'
 }
 
-apply plugin: 'io.spring.dependency-management'
-
 group = 'com.tlvlp'
-version = '1.0.0'
+version = '0.0.1-SNAPSHOT'
 sourceCompatibility = '11'
-def projectName = 'iot-reporting-service'
-def dockerRepo = 'docker.tlvlp.com'
-def mainClass = 'com.tlvlp.iot.server.reporting.Application'
-def servicePort = 8400
+ext {
+	mockitoVersion = "3.+"
+	projectName = 'iot-reporting-service'
+	dockerRepo = 'docker.tlvlp.com'
+	mainClass = 'com.tlvlp.iot.server.reporting.Application'
+	servicePort = 8400
+}
+
 
 repositories {
 	mavenCentral()
+	maven { url 'https://repo.spring.io/milestone' }
 }
 
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
-
-	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation('org.springframework.boot:spring-boot-starter-test') {
+		exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
+	}
+	testImplementation "org.mockito:mockito-core:${mockitoVersion}"
+	testImplementation "org.mockito:mockito-junit-jupiter:${mockitoVersion}"
 }
 
-bootJar {
-	mainClassName = mainClass
-	version = project.version
+test {
+	useJUnitPlatform()
 }
 
 docker {
