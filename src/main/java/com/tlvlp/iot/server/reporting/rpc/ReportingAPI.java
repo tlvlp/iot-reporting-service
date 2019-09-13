@@ -13,6 +13,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 @RestController
 public class ReportingAPI {
@@ -33,7 +34,7 @@ public class ReportingAPI {
                                       @RequestParam
                                       @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime timeTo,
                                       @RequestParam Set<ChronoUnit> requestedScopes) {
-        Map<ChronoUnit, Map<String, Double>> filteredValues =
+        Map<ChronoUnit, TreeMap<String, Double>> filteredValues =
                 reportingService.getAverages(unitID, moduleID, timeFrom, timeTo, requestedScopes);
         return new ResponseEntity<>(filteredValues, HttpStatus.OK);
     }

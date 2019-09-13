@@ -29,10 +29,10 @@ public class ReportingService {
         this.mongoTemplate = mongoTemplate;
     }
 
-    public Map<ChronoUnit, Map<String, Double>> getAverages(String unitID, String moduleID, LocalDateTime timeFrom,
-                                                            LocalDateTime timeTo, Set<ChronoUnit> requestedScopes) {
+    public Map<ChronoUnit, TreeMap<String, Double>> getAverages(String unitID, String moduleID, LocalDateTime timeFrom,
+                                                                LocalDateTime timeTo, Set<ChronoUnit> requestedScopes) {
         List<Value> rawValues = getRawValuesFromDB(unitID, moduleID, timeFrom, timeTo);
-        Map<ChronoUnit, Map<String, Double>> averagesReport = new HashMap<>();
+        Map<ChronoUnit, TreeMap<String, Double>> averagesReport = new HashMap<>();
         for (ChronoUnit scope : requestedScopes) {
             switch (scope) {
                 case MINUTES:
@@ -72,11 +72,11 @@ public class ReportingService {
         return mongoTemplate.find(query, Value.class);
     }
 
-    private Map<String, Double> getFormattedRawValues(List<Value> rawList) {
+    private TreeMap<String, Double> getFormattedRawValues(List<Value> rawList) {
         Set<LocalDateTime> hourSet = rawList.stream()
                 .map(value -> value.getTime().truncatedTo(HOURS))
                 .collect(Collectors.toSet());
-        Map<String, Double> hourlyAverages = new TreeMap<>();
+        TreeMap<String, Double> hourlyAverages = new TreeMap<>();
         for (LocalDateTime date : hourSet) {
             OptionalDouble average = rawList.stream()
                     .filter(rawValue -> date.getYear() == rawValue.getTime().getYear())
@@ -92,11 +92,11 @@ public class ReportingService {
         return hourlyAverages;
     }
 
-    private Map<String, Double> getHourlyAverages(List<Value> rawList) {
+    private TreeMap<String, Double> getHourlyAverages(List<Value> rawList) {
         Set<LocalDateTime> hourSet = rawList.stream()
                 .map(value -> value.getTime().truncatedTo(HOURS))
                 .collect(Collectors.toSet());
-        Map<String, Double> hourlyAverages = new TreeMap<>();
+        TreeMap<String, Double> hourlyAverages = new TreeMap<>();
         for (LocalDateTime date : hourSet) {
             OptionalDouble average = rawList.stream()
                     .filter(rawValue -> date.getYear() == rawValue.getTime().getYear())
@@ -112,11 +112,11 @@ public class ReportingService {
         return hourlyAverages;
     }
 
-    private Map<String, Double> getDailyAverages(List<Value> rawList) {
+    private TreeMap<String, Double> getDailyAverages(List<Value> rawList) {
         Set<LocalDate> daySet = rawList.stream()
                 .map(value -> value.getTime().toLocalDate())
                 .collect(Collectors.toSet());
-        Map<String, Double> dailyAverages = new TreeMap<>();
+        TreeMap<String, Double> dailyAverages = new TreeMap<>();
         for (LocalDate date : daySet) {
             OptionalDouble average = rawList.stream()
                     .filter(rawValue -> date.getYear() == rawValue.getTime().getYear())
@@ -131,12 +131,12 @@ public class ReportingService {
         return dailyAverages;
     }
 
-    private Map<String, Double> getMonthlyAverages(List<Value> rawList) {
+    private TreeMap<String, Double> getMonthlyAverages(List<Value> rawList) {
         Set<YearMonth> monthSet = rawList.stream()
                 .map(Value::getTime)
                 .map(date -> YearMonth.of(date.getYear(), date.getMonth()))
                 .collect(Collectors.toSet());
-        Map<String, Double> monthlyAverages = new TreeMap<>();
+        TreeMap<String, Double> monthlyAverages = new TreeMap<>();
         for (YearMonth date : monthSet) {
             OptionalDouble average = rawList.stream()
                     .filter(rawValue -> date.getYear() == rawValue.getTime().getYear())
@@ -150,11 +150,11 @@ public class ReportingService {
         return monthlyAverages;
     }
 
-    private Map<String, Double> getYearlyAverages(List<Value> rawList) {
+    private TreeMap<String, Double> getYearlyAverages(List<Value> rawList) {
         Set<Year> yearSet = rawList.stream()
                 .map(value -> Year.of(value.getTime().getYear()))
                 .collect(Collectors.toSet());
-        Map<String, Double> yearlyAverages = new TreeMap<>();
+        TreeMap<String, Double> yearlyAverages = new TreeMap<>();
         for (Year date : yearSet) {
             OptionalDouble average = rawList.stream()
                     .filter(rawValue -> date.getValue() == rawValue.getTime().getYear())
