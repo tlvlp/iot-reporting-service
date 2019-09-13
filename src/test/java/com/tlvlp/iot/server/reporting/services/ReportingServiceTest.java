@@ -83,7 +83,7 @@ class ReportingServiceTest {
         for (TreeMap<String, Double> currentScope : report.values()) {
             assertNotNull(currentScope);
             LocalDateTime firstDateInScope = LocalDateTime.parse(currentScope.firstKey());
-            LocalDateTime lastDateInScope = LocalDateTime.parse(currentScope.firstKey());
+            LocalDateTime lastDateInScope = LocalDateTime.parse(currentScope.lastKey());
             assertTrue(firstDateInScope.isAfter(startDate) || firstDateInScope.isEqual(startDate),
                     "First date in scope is in range");
             assertTrue(lastDateInScope.isBefore(endDate) || lastDateInScope.isEqual(endDate),
