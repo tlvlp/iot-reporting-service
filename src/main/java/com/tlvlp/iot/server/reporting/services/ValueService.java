@@ -35,12 +35,13 @@ public class ValueService {
 
     private ResponseEntity<String> updateValueInDB(Value value) {
         try {
-            checkValueValidity(value);
+            Value localValue = new Value(value);
+            checkValueValidity(localValue);
             LocalDateTime now = LocalDateTime.now();
-            value.setValueID(getNewValueID())
+            localValue.setValueID(getNewValueID())
                     .setTime(now);
-            mongoTemplate.save(value);
-            log.info("Value saved: {}", value);
+            mongoTemplate.save(localValue);
+            log.info("Value saved: {}", localValue);
             return new ResponseEntity<>("Saved", HttpStatus.ACCEPTED);
         } catch (IllegalArgumentException e) {
             log.error("Value cannot be saved: {}", e.getMessage());
