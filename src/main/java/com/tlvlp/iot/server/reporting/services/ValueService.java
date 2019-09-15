@@ -37,9 +37,9 @@ public class ValueService {
         try {
             Value localValue = new Value(value);
             checkValueValidity(localValue);
-            LocalDateTime now = LocalDateTime.now();
-            localValue.setValueID(getNewValueID())
-                    .setTime(now);
+            localValue
+                    .setValueID(getNewValueID())
+                    .setTime(LocalDateTime.now());
             mongoTemplate.save(localValue);
             log.info("Value saved: {}", localValue);
             return new ResponseEntity<>("Saved", HttpStatus.ACCEPTED);
