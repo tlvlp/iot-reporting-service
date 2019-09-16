@@ -5,6 +5,8 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -33,8 +35,11 @@ class ValueServiceTest {
     @InjectMocks
     private ValueService valueService;
 
+    @Captor
+    private ArgumentCaptor<Value> captor;
+
     @Test
-    @DisplayName("Save correct value and collect ACCEPTED status")
+    @DisplayName("Save correct value")
     void saveIncomingValues_Correct() {
         // given
         Value baseValue = new Value().setUnitID("unit").setModuleID("module").setValue(1d);
@@ -46,16 +51,20 @@ class ValueServiceTest {
         HashMap<Value, ResponseEntity<String>> results = valueService.saveIncomingValues(values);
 
         // then
-        then(mongoTemplate).should().save(any(Value.class));
-        assertNotNull(results);
-        assertNotNull(results.get(baseValue));
-        assertEquals(results.size(), values.size());
-        assertEquals(results.get(baseValue).getStatusCode(), HttpStatus.ACCEPTED);
-        //todo check generated values (valueID, date) - ArgumentCaptor?
+        then(mongoTemplate).should().save(captor.capture());
+
+        assertNotNull(results, "The summary is generated");
+        assertNotNull(results.get(baseValue), "The received item is present in the summary");
+        assertEquals(results.size(), values.size(), "Each status is added to the summary");
+
+        assertEquals(results.get(baseValue).getStatusCode(), HttpStatus.ACCEPTED, "Correct status is added to the summary");
+
+        assertNotNull(captor.getValue().getValueID(), "The persisted value receives a valueID");
+        assertNotNull(captor.getValue().getTime(), "The persisted value receives a timestamp");
     }
 
     @Test
-    @DisplayName("Try to save incorrect values and collect BAD_REQUEST status for each")
+    @DisplayName("Attempt to save incorrect values")
     void saveIncomingValues_Errors() {
         // when
         Value baseValue = new Value().setUnitID("unit").setModuleID("module").setValue(1d);
@@ -68,11 +77,11 @@ class ValueServiceTest {
 
         // then
         then(mongoTemplate).shouldHaveZeroInteractions();
-        assertNotNull(results);
-        assertEquals(results.size(), values.size());
+        assertNotNull(results, "The summary is generated");
+        assertEquals(results.size(), values.size(), "Each received item's status is logged to the summary");
         for (ResponseEntity<String> status : results.values()) {
-            assertNotNull(status);
-            assertEquals(status.getStatusCode(), HttpStatus.BAD_REQUEST);
+            assertNotNull(status, "Each status is generated");
+            assertEquals(status.getStatusCode(), HttpStatus.BAD_REQUEST, "Correct status is logged to the summary");
         }
     }
 }
