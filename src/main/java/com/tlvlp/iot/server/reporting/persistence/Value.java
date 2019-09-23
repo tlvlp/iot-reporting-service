@@ -9,10 +9,16 @@ import java.util.Objects;
 @Document(collection = "values")
 public class Value {
 
+    @Id
+    private String valueID;
+    private String unitID;
+    private String moduleID;
+    private Double value;
+    private LocalDateTime time;
+
+
     public Value() {
     }
-
-    private LocalDateTime time;
 
     public Value(Value copyValue) {
         this.valueID = copyValue.getValueID();
@@ -21,17 +27,6 @@ public class Value {
         this.time = copyValue.getTime();
         this.value = copyValue.getValue();
     }
-
-    @Id
-    private String valueID;
-    private String unitID;
-    private String moduleID;
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(valueID, unitID, moduleID, time, value);
-    }
-    private Double value;
 
     @Override
     public String toString() {
@@ -54,6 +49,11 @@ public class Value {
                 moduleID.equals(that.moduleID) &&
                 time.equals(that.time) &&
                 value.equals(that.value);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(valueID, unitID, moduleID, time, value);
     }
 
     public String getValueID() {
