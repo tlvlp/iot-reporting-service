@@ -64,7 +64,7 @@ public class ValueService {
     }
 
     private String getNewValueID() {
-        return String.format("%s-%s-VALUE", LocalDate.now().toString(), UUID.randomUUID().toString());
+        return String.format("%s-VALUE-%s", LocalDate.now().toString(), UUID.randomUUID().toString());
     }
 
     private void deleteValue(Value average) {
