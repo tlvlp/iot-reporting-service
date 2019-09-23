@@ -54,15 +54,13 @@ Takes a List in the RequestBody where each value must contain:
 
 ### GET Average Value Reports:
 
-Returns a Map where the keys are the ChronoUnits of the requested scopes and the values are the
-maps containing Dates in string format as keys and the corresponding calculated averages as Double values
+Returns averages within the requested time frame for the requested scopes
 
 #### Related environment variables:
 - ${REPORTING_SERVICE_API_GET_AVERAGES}
-- ${REPORTING_SERVICE_API_GET_AVERAGES_URL}
 
-#### Fields:
-Takes the below mandatory RequestParams:
+#### Input:
+RequestParams:
 - **unitID**: String - ID of the containing Unit
 - **moduleID**: String - module ID
 - **timeFrom**: LocalDateTime - The start date and time of the requested report interval (inclusive)
@@ -73,3 +71,23 @@ Takes the below mandatory RequestParams:
     - **DAYS**: Daily averages from the module within the given interval 
     - **MONTHS**: Monthly averages from the module within the given interval
     - **YEARS**: Yearly averages from the module within the given interval 
+    
+#### Output:
+A map where each key is a ChronoUnit denoting the scope which the values belong to
+and each value is a TreeMap ordered by date containing periods(scope specific!) and related averages in a Dobule format
+
+```
+{
+    [
+        "MONTHS": [
+                        {"2019-04", 14.0}, 
+                        {"2019-05", 14.2}
+                  ]
+        "YEARS": [
+                        {"2019", 14.1}, 
+                        {"2020", 10.0}
+                 ]
+    ]
+}
+```
+
