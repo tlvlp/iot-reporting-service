@@ -45,7 +45,7 @@ public class ValueService {
             var validationProblems = Validation.buildDefaultValidatorFactory().getValidator().validate(localValue);
             if(! validationProblems.isEmpty()) {
                 throw new IllegalArgumentException(validationProblems.toString());
-            };
+            }
             mongoTemplate.save(localValue);
             log.info("Value saved: {}", localValue);
             return new ResponseEntity<>("Saved", HttpStatus.ACCEPTED);
