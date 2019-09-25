@@ -24,7 +24,7 @@ public class Value {
         this.valueID = copyValue.getValueID();
         this.unitID = copyValue.getUnitID();
         this.moduleID = copyValue.getModuleID();
-        this.time = copyValue.getTime();
+        this.time = copyValue.getTime() == null ? null : LocalDateTime.from(copyValue.getTime());
         this.value = copyValue.getValue();
     }
 
