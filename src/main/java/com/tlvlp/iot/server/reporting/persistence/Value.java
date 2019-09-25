@@ -3,6 +3,9 @@ package com.tlvlp.iot.server.reporting.persistence;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.PastOrPresent;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
@@ -11,9 +14,13 @@ public class Value {
 
     @Id
     private String valueID;
+    @NotBlank
     private String unitID;
+    @NotBlank
     private String moduleID;
+    @NotNull
     private Double value;
+    @PastOrPresent
     private LocalDateTime time;
 
 

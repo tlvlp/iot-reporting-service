@@ -8,6 +8,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -27,20 +29,20 @@ public class ReportingAPI {
     }
 
     @GetMapping("${REPORTING_SERVICE_API_GET_AVERAGES}")
-    public ResponseEntity getAverages(@RequestParam String unitID,
-                                      @RequestParam String moduleID,
+    public ResponseEntity getAverages(@RequestParam @NotBlank String unitID,
+                                      @RequestParam @NotBlank String moduleID,
                                       @RequestParam
                                       @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime timeFrom,
                                       @RequestParam
                                       @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime timeTo,
-                                      @RequestParam Set<ChronoUnit> requestedScopes) {
+                                      @RequestParam @NotEmpty Set<ChronoUnit> requestedScopes) {
         Map<ChronoUnit, TreeMap<String, Double>> filteredValues =
                 reportingService.getAverages(unitID, moduleID, timeFrom, timeTo, requestedScopes);
         return new ResponseEntity<>(filteredValues, HttpStatus.OK);
     }
 
     @PostMapping("${REPORTING_SERVICE_API_POST_VALUES}")
-    public ResponseEntity saveValues(@RequestBody List<Value> values) {
+    public ResponseEntity saveValues(@RequestBody @NotEmpty List<Value> values) {
         return new ResponseEntity<>(valueService.saveIncomingValues(values), HttpStatus.MULTI_STATUS);
     }
 }

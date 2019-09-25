@@ -8,6 +8,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import javax.validation.Validation;
+import javax.validation.ValidationException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -35,41 +37,26 @@ public class ValueService {
 
     private ResponseEntity<String> updateValueInDB(Value value) {
         try {
-            Value localValue = new Value(value);
-            checkValueValidity(localValue);
+            var localValue = new Value(value);
             localValue
                     .setValueID(getNewValueID())
+                    .setValueID(getNewValueID())
                     .setTime(LocalDateTime.now());
+            var validationProblems = Validation.buildDefaultValidatorFactory().getValidator().validate(localValue);
+            if(! validationProblems.isEmpty()) {
+                throw new IllegalArgumentException(validationProblems.toString());
+            };
             mongoTemplate.save(localValue);
             log.info("Value saved: {}", localValue);
             return new ResponseEntity<>("Saved", HttpStatus.ACCEPTED);
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException | ValidationException e) {
             log.error("Value cannot be saved: {}", e.getMessage());
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
 
-    private void checkValueValidity(Value value) throws IllegalArgumentException {
-        if (!isValidString(value.getUnitID())) {
-            throw new IllegalArgumentException(String.format("unitID must be a valid String! %s", value));
-        } else if (!isValidString(value.getModuleID())) {
-            throw new IllegalArgumentException(String.format("moduleID must be a valid String! %s", value));
-        } else if (value.getValue() == null) {
-            throw new IllegalArgumentException(String.format("value must be a valid Double! %s", value));
-        }
-    }
-
-    private Boolean isValidString(String str) {
-        return str != null && !str.isEmpty();
-    }
-
     private String getNewValueID() {
         return String.format("%s-VALUE-%s", LocalDate.now().toString(), UUID.randomUUID().toString());
-    }
-
-    private void deleteValue(Value average) {
-        mongoTemplate.remove(average);
-        log.debug(String.format("Deleting value: %s", average));
     }
 
 }

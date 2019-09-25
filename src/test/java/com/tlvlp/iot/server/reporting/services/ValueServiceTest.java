@@ -1,7 +1,7 @@
 package com.tlvlp.iot.server.reporting.services;
 
 import com.tlvlp.iot.server.reporting.persistence.Value;
-import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -14,9 +14,6 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -38,17 +35,23 @@ class ValueServiceTest {
     @Captor
     private ArgumentCaptor<Value> captor;
 
+    private Value baseValue;
+
+    @BeforeEach
+    void beforeEach() {
+        baseValue = new Value().setUnitID("unit").setModuleID("module").setValue(1d);
+    }
+
     @Test
     @DisplayName("Save correct value")
     void saveIncomingValues_Correct() {
         // given
-        Value baseValue = new Value().setUnitID("unit").setModuleID("module").setValue(1d);
         given(mongoTemplate.save(any(Value.class)))
                 .willReturn(baseValue);
 
         // when
-        List<Value> values = Collections.singletonList(baseValue);
-        HashMap<Value, ResponseEntity<String>> results = valueService.saveIncomingValues(values);
+        var values = List.of(baseValue);
+        var results = valueService.saveIncomingValues(values);
 
         // then
         then(mongoTemplate).should().save(captor.capture());
@@ -66,14 +69,15 @@ class ValueServiceTest {
     @Test
     @DisplayName("Attempt to save incorrect values")
     void saveIncomingValues_Errors() {
-        // when
-        Value baseValue = new Value().setUnitID("unit").setModuleID("module").setValue(1d);
-        List<Value> values = Arrays.asList(
+        // given
+        var values = List.of(
                 new Value(baseValue).setUnitID(null),
                 new Value(baseValue).setModuleID(null),
                 new Value(baseValue).setValue(null)
         );
-        HashMap<Value, ResponseEntity<String>> results = valueService.saveIncomingValues(values);
+
+        // when
+        var results = valueService.saveIncomingValues(values);
 
         // then
         then(mongoTemplate).shouldHaveZeroInteractions();
