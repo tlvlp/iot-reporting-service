@@ -73,23 +73,12 @@ public class ReportingService {
     }
 
     private TreeMap<String, Double> getFormattedRawValues(List<Value> rawList) {
-        Set<LocalDateTime> hourSet = rawList.stream()
-                .map(value -> value.getTime().truncatedTo(HOURS))
-                .collect(Collectors.toSet());
-        TreeMap<String, Double> hourlyAverages = new TreeMap<>();
-        for (LocalDateTime date : hourSet) {
-            OptionalDouble average = rawList.stream()
-                    .filter(rawValue -> date.getYear() == rawValue.getTime().getYear())
-                    .filter(rawValue -> date.getMonth() == rawValue.getTime().getMonth())
-                    .filter(rawValue -> date.getDayOfMonth() == rawValue.getTime().getDayOfMonth())
-                    .filter(rawValue -> date.getHour() == rawValue.getTime().getHour())
-                    .mapToDouble(Value::getValue)
-                    .average();
-            if (average.isPresent()) {
-                hourlyAverages.put(date.toString(), average.getAsDouble());
-            }
-        }
-        return hourlyAverages;
+        return rawList.stream()
+                .collect(Collectors
+                        .toMap(v -> v.getTime().truncatedTo(MINUTES).toString(),
+                                Value::getValue, (o1, o2) -> o1,
+                                TreeMap::new));
+
     }
 
     private TreeMap<String, Double> getHourlyAverages(List<Value> rawList) {
