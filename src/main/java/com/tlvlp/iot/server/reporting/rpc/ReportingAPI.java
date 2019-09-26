@@ -35,7 +35,8 @@ public class ReportingAPI {
                                       @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime timeFrom,
                                       @RequestParam
                                       @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime timeTo,
-                                      @RequestParam @NotEmpty Set<ChronoUnit> requestedScopes) {
+                                      @RequestParam @NotEmpty Set<ChronoUnit> requestedScopes)
+    {
         Map<ChronoUnit, TreeMap<String, Double>> filteredValues =
                 reportingService.getAverages(unitID, moduleID, timeFrom, timeTo, requestedScopes);
         return new ResponseEntity<>(filteredValues, HttpStatus.OK);

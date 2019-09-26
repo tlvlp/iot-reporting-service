@@ -49,18 +49,16 @@ public class Value {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof Value)) return false;
-        Value that = (Value) o;
-        return valueID.equals(that.valueID) &&
-                unitID.equals(that.unitID) &&
-                moduleID.equals(that.moduleID) &&
-                time.equals(that.time) &&
-                value.equals(that.value);
+        if (o == null || getClass() != o.getClass()) return false;
+        Value value = (Value) o;
+        return Objects.equals(valueID, value.valueID) &&
+                Objects.equals(unitID, value.unitID) &&
+                Objects.equals(moduleID, value.moduleID);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(valueID, unitID, moduleID, time, value);
+        return Objects.hash(valueID, unitID, moduleID);
     }
 
     public String getValueID() {
