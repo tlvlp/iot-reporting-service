@@ -44,12 +44,12 @@ public class ValueService {
                     .setTime(LocalDateTime.now());
             var validationProblems = Validation.buildDefaultValidatorFactory().getValidator().validate(localValue);
             if(! validationProblems.isEmpty()) {
-                throw new IllegalArgumentException(validationProblems.toString());
+                throw new InvalidValueException(validationProblems.toString());
             }
             mongoTemplate.save(localValue);
             log.info("Value saved: {}", localValue);
             return new ResponseEntity<>("Saved", HttpStatus.ACCEPTED);
-        } catch (IllegalArgumentException | ValidationException e) {
+        } catch (InvalidValueException | ValidationException e) {
             log.error("Value cannot be saved: {}", e.getMessage());
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
