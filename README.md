@@ -73,20 +73,17 @@ RequestParams:
     - **YEARS**: Yearly averages from the module within the given interval 
     
 #### Output:
-A map where each key is a ChronoUnit denoting the scope which the values belong to
-and each value is a TreeMap ordered by date containing periods(scope specific!) and related averages in a Dobule format
+A list of Average objects:
+- **scope**: String of ChronoUnit value with the granularity/scope of the average value
+- **date**: String form of the date unit of the average (eg. 2019-10 will contain the average of all values in that month)
+- **value**: Double form of the calculated average
 
 ```
 {
     [
-        "MONTHS": [
-                        {"2019-04", 14.0}, 
-                        {"2019-05", 14.2}
-                  ]
-        "YEARS": [
-                        {"2019", 14.1}, 
-                        {"2020", 10.0}
-                 ]
+        {"scope": "DAYS", "date": "2019-10-06", "value": "12.0"},
+        {"scope": "MONTHS", "date": "2019-10", "value": "9.0"},
+        {"scope": "YEARS", "date": "2019", "value": "10.0"}
     ]
 }
 ```
