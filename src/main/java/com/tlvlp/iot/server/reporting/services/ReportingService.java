@@ -1,6 +1,7 @@
 package com.tlvlp.iot.server.reporting.services;
 
-import com.tlvlp.iot.server.reporting.persistence.Value;
+import com.tlvlp.iot.server.reporting.entities.Average;
+import com.tlvlp.iot.server.reporting.entities.Value;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Sort;
@@ -14,7 +15,10 @@ import java.time.LocalDateTime;
 import java.time.Year;
 import java.time.YearMonth;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.OptionalDouble;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static java.time.temporal.ChronoUnit.*;
@@ -29,26 +33,26 @@ public class ReportingService {
         this.mongoTemplate = mongoTemplate;
     }
 
-    public Map<ChronoUnit, TreeMap<String, Double>> getAverages(String unitID, String moduleID, LocalDateTime timeFrom,
+    public List<Average> getAverages(String unitID, String moduleID, LocalDateTime timeFrom,
                                                                 LocalDateTime timeTo, Set<ChronoUnit> requestedScopes) {
         List<Value> rawValues = getRawValuesFromDB(unitID, moduleID, timeFrom, timeTo);
-        Map<ChronoUnit, TreeMap<String, Double>> averagesReport = new HashMap<>();
+        List<Average> averagesReport = new ArrayList<>();
         for (ChronoUnit scope : requestedScopes) {
             switch (scope) {
                 case MINUTES:
-                    averagesReport.put(MINUTES, getFormattedRawValues(rawValues));
+                    averagesReport.addAll(getFormattedRawValues(rawValues));
                     break;
                 case HOURS:
-                    averagesReport.put(HOURS, getHourlyAverages(rawValues));
+                    averagesReport.addAll(getHourlyAverages(rawValues));
                     break;
                 case DAYS:
-                    averagesReport.put(DAYS, getDailyAverages(rawValues));
+                    averagesReport.addAll(getDailyAverages(rawValues));
                     break;
                 case MONTHS:
-                    averagesReport.put(MONTHS, getMonthlyAverages(rawValues));
+                    averagesReport.addAll(getMonthlyAverages(rawValues));
                     break;
                 case YEARS:
-                    averagesReport.put(YEARS, getYearlyAverages(rawValues));
+                    averagesReport.addAll(getYearlyAverages(rawValues));
                     break;
             }
         }
@@ -72,20 +76,21 @@ public class ReportingService {
         return mongoTemplate.find(query, Value.class);
     }
 
-    private TreeMap<String, Double> getFormattedRawValues(List<Value> rawList) {
+    private List<Average> getFormattedRawValues(List<Value> rawList) {
         return rawList.stream()
-                .collect(Collectors
-                        .toMap(v -> v.getTime().truncatedTo(MINUTES).toString(),
-                                Value::getValue, (o1, o2) -> o1,
-                                TreeMap::new));
+                .map(value -> new Average()
+                        .setScope(MINUTES)
+                        .setDate(value.getTime().truncatedTo(MINUTES).toString())
+                        .setValue(value.getValue()))
+                .collect(Collectors.toList());
 
     }
 
-    private TreeMap<String, Double> getHourlyAverages(List<Value> rawList) {
+    private List<Average> getHourlyAverages(List<Value> rawList) {
         Set<LocalDateTime> hourSet = rawList.stream()
                 .map(value -> value.getTime().truncatedTo(HOURS))
                 .collect(Collectors.toSet());
-        TreeMap<String, Double> hourlyAverages = new TreeMap<>();
+        List<Average> hourlyAverages = new ArrayList<>();
         for (LocalDateTime date : hourSet) {
             OptionalDouble average = rawList.stream()
                     .filter(rawValue -> date.getYear() == rawValue.getTime().getYear())
@@ -95,17 +100,19 @@ public class ReportingService {
                     .mapToDouble(Value::getValue)
                     .average();
             if (average.isPresent()) {
-                hourlyAverages.put(date.toString(), average.getAsDouble());
+                hourlyAverages.add(new Average().setScope(HOURS)
+                        .setDate(date.toString())
+                        .setValue(average.getAsDouble()));
             }
         }
         return hourlyAverages;
     }
 
-    private TreeMap<String, Double> getDailyAverages(List<Value> rawList) {
+    private List<Average> getDailyAverages(List<Value> rawList) {
         Set<LocalDate> daySet = rawList.stream()
                 .map(value -> value.getTime().toLocalDate())
                 .collect(Collectors.toSet());
-        TreeMap<String, Double> dailyAverages = new TreeMap<>();
+        List<Average> dailyAverages = new ArrayList<>();
         for (LocalDate date : daySet) {
             OptionalDouble average = rawList.stream()
                     .filter(rawValue -> date.getYear() == rawValue.getTime().getYear())
@@ -114,18 +121,20 @@ public class ReportingService {
                     .mapToDouble(Value::getValue)
                     .average();
             if (average.isPresent()) {
-                dailyAverages.put(date.toString(), average.getAsDouble());
+                dailyAverages.add(new Average().setScope(DAYS)
+                        .setDate(date.toString())
+                        .setValue(average.getAsDouble()));
             }
         }
         return dailyAverages;
     }
 
-    private TreeMap<String, Double> getMonthlyAverages(List<Value> rawList) {
+    private List<Average> getMonthlyAverages(List<Value> rawList) {
         Set<YearMonth> monthSet = rawList.stream()
                 .map(Value::getTime)
                 .map(date -> YearMonth.of(date.getYear(), date.getMonth()))
                 .collect(Collectors.toSet());
-        TreeMap<String, Double> monthlyAverages = new TreeMap<>();
+        List<Average> monthlyAverages = new ArrayList<>();
         for (YearMonth date : monthSet) {
             OptionalDouble average = rawList.stream()
                     .filter(rawValue -> date.getYear() == rawValue.getTime().getYear())
@@ -133,24 +142,28 @@ public class ReportingService {
                     .mapToDouble(Value::getValue)
                     .average();
             if (average.isPresent()) {
-                monthlyAverages.put(date.toString(), average.getAsDouble());
+                monthlyAverages.add(new Average().setScope(MONTHS)
+                        .setDate(date.toString())
+                        .setValue(average.getAsDouble()));
             }
         }
         return monthlyAverages;
     }
 
-    private TreeMap<String, Double> getYearlyAverages(List<Value> rawList) {
+    private List<Average> getYearlyAverages(List<Value> rawList) {
         Set<Year> yearSet = rawList.stream()
                 .map(value -> Year.of(value.getTime().getYear()))
                 .collect(Collectors.toSet());
-        TreeMap<String, Double> yearlyAverages = new TreeMap<>();
+        List<Average> yearlyAverages = new ArrayList<>();
         for (Year date : yearSet) {
             OptionalDouble average = rawList.stream()
                     .filter(rawValue -> date.getValue() == rawValue.getTime().getYear())
                     .mapToDouble(Value::getValue)
                     .average();
             if (average.isPresent()) {
-                yearlyAverages.put(date.toString(), average.getAsDouble());
+                yearlyAverages.add(new Average().setScope(YEARS)
+                        .setDate(date.toString())
+                        .setValue(average.getAsDouble()));
             }
         }
         return yearlyAverages;

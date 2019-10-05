@@ -2,7 +2,8 @@ package com.tlvlp.iot.server.reporting.rpc;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.tlvlp.iot.server.reporting.persistence.Value;
+import com.tlvlp.iot.server.reporting.entities.Average;
+import com.tlvlp.iot.server.reporting.entities.Value;
 import com.tlvlp.iot.server.reporting.services.ReportingService;
 import com.tlvlp.iot.server.reporting.services.ValueService;
 import org.junit.jupiter.api.BeforeEach;
@@ -19,8 +20,6 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
 
 import static java.time.temporal.ChronoUnit.MINUTES;
 import static org.mockito.ArgumentMatchers.*;
@@ -64,7 +63,7 @@ class ReportingAPITest {
         var requestedScopes = new HashSet<ChronoUnit>();
         requestedScopes.add(MINUTES);
         given(reportingService.getAverages(unitID, moduleID, timeFrom, timeTo, requestedScopes))
-                .willReturn(Map.of(MINUTES, new TreeMap<>()));
+                .willReturn(List.of(new Average(), new Average()));
 
         // when
         mockMvc.perform(get("/endpoint_averages")

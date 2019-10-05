@@ -1,6 +1,7 @@
 package com.tlvlp.iot.server.reporting.services;
 
-import com.tlvlp.iot.server.reporting.persistence.Value;
+import com.tlvlp.iot.server.reporting.entities.Average;
+import com.tlvlp.iot.server.reporting.entities.Value;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,13 +15,12 @@ import org.springframework.data.mongodb.core.query.Query;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
@@ -67,21 +67,22 @@ class ReportingServiceTest {
 
         // when
         Set<ChronoUnit> scopes = Set.of(ChronoUnit.MINUTES);
-        Map<ChronoUnit, TreeMap<String, Double>> report =
+        List<Average> report =
                 reportingService.getAverages(unitID, moduleID, startDate, endDate, scopes);
 
         // then
         then(mongoTemplate).should().find(any(Query.class), eq(Value.class));
 
         assertNotNull(report);
+        var resultScopes = report.stream().map(Average::getScope).distinct().collect(Collectors.toList());
         assertArrayEquals(
                 scopes.toArray(),
-                report.keySet().toArray(),
+                resultScopes.toArray(),
                 "Report contains the correct scopes"
         );
 
-        for (TreeMap<String, Double> currentScope : report.values()) {
-            assertNotNull(currentScope, "Each scope average should not be null");
+        for (Average average : report) {
+            assertNotNull(average.getValue(), "Each scope average should not be null");
         }
     }
 }

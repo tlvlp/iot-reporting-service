@@ -1,6 +1,6 @@
 package com.tlvlp.iot.server.reporting.services;
 
-import com.tlvlp.iot.server.reporting.persistence.Value;
+import com.tlvlp.iot.server.reporting.entities.Value;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.mongodb.core.MongoTemplate;
