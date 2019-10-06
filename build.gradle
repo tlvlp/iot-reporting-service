@@ -11,7 +11,7 @@ sourceCompatibility = '11'
 ext {
 	mockitoVersion = "3.+"
 	projectName = 'iot-reporting-service'
-	dockerRepo = 'docker.tlvlp.com'
+	dockerRepo = 'tlvlp'
 	mainClass = 'com.tlvlp.iot.server.reporting.Application'
 	servicePort = 8400
 }
