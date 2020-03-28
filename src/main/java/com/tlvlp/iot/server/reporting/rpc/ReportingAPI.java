@@ -13,6 +13,7 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 
@@ -27,8 +28,8 @@ public class ReportingAPI {
         this.reportingService = reportingService;
     }
 
-    @GetMapping("${REPORTING_SERVICE_API_GET_AVERAGES}")
-    public ResponseEntity getAverages(@RequestParam @NotBlank String unitID,
+    @GetMapping("${tlvlp.iot.server.reporting_service.api.get_averages}")
+    public List<Average> getAverages(@RequestParam @NotBlank String unitID,
                                       @RequestParam @NotBlank String moduleID,
                                       @RequestParam
                                       @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime timeFrom,
@@ -36,13 +37,12 @@ public class ReportingAPI {
                                       @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime timeTo,
                                       @RequestParam @NotEmpty Set<ChronoUnit> requestedScopes)
     {
-        List<Average> filteredValues =
-                reportingService.getAverages(unitID, moduleID, timeFrom, timeTo, requestedScopes);
-        return new ResponseEntity<>(filteredValues, HttpStatus.OK);
+        return reportingService.getAverages(unitID, moduleID, timeFrom, timeTo, requestedScopes);
+
     }
 
-    @PostMapping("${REPORTING_SERVICE_API_POST_VALUES}")
-    public ResponseEntity saveValues(@RequestBody @NotEmpty List<Value> values) {
+    @PostMapping("${tlvlp.iot.server.reporting_service.api.post_values}")
+    public ResponseEntity<HashMap<Value, ResponseEntity<String>>> saveValues(@RequestBody @NotEmpty List<Value> values) {
         return new ResponseEntity<>(valueService.saveIncomingValues(values), HttpStatus.MULTI_STATUS);
     }
 }

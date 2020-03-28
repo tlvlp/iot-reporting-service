@@ -33,8 +33,7 @@ public class ReportingService {
         this.mongoTemplate = mongoTemplate;
     }
 
-    public List<Average> getAverages(String unitID, String moduleID, LocalDateTime timeFrom,
-                                                                LocalDateTime timeTo, Set<ChronoUnit> requestedScopes) {
+    public List<Average> getAverages(String unitID, String moduleID, LocalDateTime timeFrom, LocalDateTime timeTo, Set<ChronoUnit> requestedScopes) {
         List<Value> rawValues = getRawValuesFromDB(unitID, moduleID, timeFrom, timeTo);
         List<Average> averagesReport = new ArrayList<>();
         for (ChronoUnit scope : requestedScopes) {
